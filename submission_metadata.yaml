@@ -1,0 +1,39 @@
+# submission_metadata.yaml
+# Fields per submission_spec.md Section 10.2. Fill in your actual details
+# before submitting -- this is a placeholder generated from the spec's
+# required-fields list, since the official submission_metadata_template.yaml
+# from the hackathon bundle hasn't been uploaded into this repo yet.
+# Replace every <FILL_IN> below.
+
+team_name: "<FILL_IN>"
+
+primary_contact:
+  name: "<FILL_IN>"
+  email: "<FILL_IN>"
+  phone: "<FILL_IN>"
+
+github_repository_url: "<FILL_IN>"   # e.g. https://github.com/yourusername/redrob-hackathon
+
+sandbox_demo_link: "<FILL_IN>"        # e.g. a HuggingFace Space, Colab notebook, or Streamlit app
+                                       # -- required, must run end-to-end on a small (<=100) sample
+
+ai_tools_declared:
+  - Claude
+
+compute_environment_summary: "<FILL_IN>"   # e.g. "MacBook Pro M2, 16GB RAM, Python 3.11"
+
+team_members:
+  - name: "<FILL_IN>"
+    email: "<FILL_IN>"
+
+methodology_summary: >
+  Rule-based, fully-explainable scoring pipeline (no trained model, no LLM
+  calls during ranking). Separates skills-list keyword signal from career-
+  history keyword signal to avoid rewarding keyword-stuffed profiles over
+  candidates with real applied-ML/retrieval/ranking experience, per the JD's
+  explicit warning. Combines experience relevance, skills relevance,
+  years-of-experience fit, location fit, and behavioral availability into a
+  weighted composite score, with hard exclusion for profiles that fail
+  internal-consistency (honeypot) checks. Runs end-to-end on the full 100K
+  candidate pool in under a minute, well inside the 5-minute / 16GB / CPU-only
+  compute budget.

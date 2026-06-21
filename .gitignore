@@ -1,10 +1,17 @@
-*.csv
-*.jsonl
-*.json
+# Large data files -- not committed (provided by hackathon organizers / regenerated locally)
+candidates.jsonl
+candidates.jsonl.gz
+features_full.csv
+scored_full.csv
+
+# Keep small reference files from the bundle, and the actual submission output
 !sample_candidates.json
 !candidate_schema.json
 !sample_submission.csv
+!submission.csv
+
 __pycache__/
 *.pyc
 .DS_Store
+venv/
 
