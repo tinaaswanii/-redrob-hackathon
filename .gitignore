@@ -1,0 +1,10 @@
+*.csv
+*.jsonl
+*.json
+!sample_candidates.json
+!candidate_schema.json
+!sample_submission.csv
+__pycache__/
+*.pyc
+.DS_Store
+
