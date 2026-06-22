@@ -46,13 +46,23 @@ OTHER_TIER1_CITIES = {"hyderabad", "mumbai", "delhi", "delhi ncr", "bengaluru",
 
 
 def experience_score(row) -> float:
-    """0-40 points. Scales with how many distinct JD-relevant signals show up
-    in ACTUAL career history (not skills list). Capped at 40 so one extreme
-    outlier doesn't dominate; diminishing returns beyond ~12 hits since at
-    that point we're confident the candidate is relevant."""
-    hits = row["exp_total_relevance_hits"]
-    # diminishing returns curve: fast climb to ~10 hits, then flattens
-    score = 40 * (1 - pow(0.85, hits))
+    """0-40 points. NOW USES EXACT TEMPLATE LOOKUP (template_relevance.py)
+    rather than fuzzy keyword counting. We discovered this dataset's career
+    descriptions are drawn from only 44 fixed templates (confirmed: 300,171
+    descriptions, 44 unique strings), so we could read and score every single
+    one by hand instead of guessing relevance from keyword overlap.
+
+    Uses template_current_role_score most heavily (what they do NOW matters
+    most) blended with template_max_score (credit for having done relevant
+    work even if their current role is a step in a different direction).
+    """
+    current = row.get("template_current_role_score", 0) or 0
+    best_ever = row.get("template_max_score", 0) or 0
+    # 70% weight on current role, 30% on best-ever -- rewards relevant
+    # current work most, but still credits someone who did great ranking
+    # work two jobs ago and is now in a slightly more generic role.
+    blended = 0.7 * current + 0.3 * best_ever
+    score = 40 * (blended / 10.0)  # template scores are 0-10, scale to 0-40
     return round(score, 2)
 
 

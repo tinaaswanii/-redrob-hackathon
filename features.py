@@ -22,6 +22,7 @@ explicitly wants us to catch).
 import json
 import re
 from datetime import date
+from template_relevance import compute_template_score
 
 # ----------------------------------------------------------------------------
 # 1. JD VOCABULARY — the words/phrases that signal real relevance.
@@ -278,6 +279,10 @@ def extract_features(candidate: dict) -> dict:
     out.update(compute_red_flags(candidate))
     out.update(compute_honeypot_flags(candidate))
     out.update(compute_behavioral_signal(candidate))
+    template_result = compute_template_score(candidate.get("career_history", []))
+    out["template_max_score"] = template_result["template_max_score"]
+    out["template_avg_score"] = template_result["template_avg_score"]
+    out["template_current_role_score"] = template_result["template_current_role_score"]
     return out
 
 
