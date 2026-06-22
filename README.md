@@ -43,28 +43,54 @@ required by submission_spec.md Section 3. It's a transparent, rule-based
 pipeline in three stages, all in `rank.py` (which imports `features.py` and
 `scoring.py`):
 
-### 1. Feature extraction (`features.py`)
+### 1. Feature extraction (`features.py`, `template_relevance.py`)
 
-Turns each candidate's messy JSON profile into structured signals. The key
-design decision: **skills-list keyword matches and career-history keyword
-matches are computed and scored separately**, never blended into one number
-at this stage. This directly addresses the JD's own warning that the
-"wrong" answer to this challenge is rewarding candidates whose *skills
-list* contains the most AI buzzwords — the JD explicitly wants candidates
-whose *career history* (what they actually did) shows real retrieval/
-ranking/ML-production work, even if their skills list doesn't list the
-trendy terms (the "plain-language Tier 5" case).
+**Key discovery, made while hand-validating our scores against real candidate
+records**: this dataset's 300,171 `career_history` descriptions are not unique
+free text — they're drawn from a fixed pool of only **44 templates**, reused
+across candidates (verified: the most common template alone appears 25,515
+times; zero descriptions fall outside this set of 44, confirmed by exhaustive
+scan). This is a fundamentally different problem than free-text NLP matching:
+it's a classification problem with a known, finite label set.
 
-Also computed here:
-- **Red flags** matching the JD's explicit disqualifier list: pure-research
-  background, 100%-consulting-firm career with no product-company
-  experience, CV/speech/robotics background *without* NLP/IR exposure,
-  framework-tutorial-level language, seniority-label title-chasing.
-- **Honeypot checks**: internal profile-consistency checks (e.g. "expert"
-  skill proficiency claimed with 0 months of use) that flag the dataset's
-  ~80 deliberately-impossible profiles.
-- **Behavioral signal summary** from the 23 `redrob_signals` fields:
-  recency of activity, recruiter response rate, notice period, etc.
+So instead of keyword/substring matching against career-history text (which is
+fuzzy and can be fooled by partial overlaps or miss real signal phrased
+differently than expected), `template_relevance.py` manually classifies **all
+44 templates exactly once**, scored 0–10 against `job_description.md`'s
+must-haves, nice-to-haves, and explicit disqualifiers, with a one-line reason
+per template. Any candidate's relevance is then an exact lookup, not a guess.
+
+The 44 templates form a clear tiered structure once read in full:
+- **Templates 1–9** (~25K each): completely unrelated functions (sales,
+  support, marketing, accounting, design, mechanical engineering) — score 0.
+- **Templates 10–15** (~10K each): tech-adjacent, no ML (DevOps, mobile,
+  frontend, generic backend, QA) — score 1.
+- **Templates 16–21** (~1.8K each): data engineering/analytics, explicitly
+  *not* modeling work — score 2.
+- **Templates 22–27** (330–390 each): **the trap zone** — genuine ML keywords
+  appear, but each template's own text discloses the exact limitation the JD
+  warns against (CV-only with no NLP, "production-side engineer, not
+  modeling," forecasting/tabular ML rather than retrieval/ranking) — score 3–4.
+- **Template 28** (78): real ranking work, framed as secondary — score 5.
+- **Templates 29–33** (57–65 each): solid production ranking/recsys/MLOps —
+  score 6–7.
+- **Templates 34–39** (8–64 each): RAG, LLM fine-tuning (LoRA/QLoRA), hybrid
+  retrieval, explicit NDCG/MRR evaluation-framework ownership — score 8–9,
+  matching the JD's stated ideal-candidate profile almost exactly.
+- **Templates 40–44** (2–6 each): deliberately plain-language descriptions of
+  the same senior ranking/retrieval/eval ownership — score 8–9. We treat these
+  as the JD's explicitly-flagged "Tier 5" case: real, senior, relevant work
+  described without buzzwords, which a naive keyword matcher would likely
+  under-score.
+
+This also separately surfaces (still computed, kept for cross-validation):
+skills-list keyword matches (kept deliberately weak relative to the
+template-based experience score, since the JD explicitly warns against
+rewarding keyword-stuffed skill lists over real career-history evidence),
+red flags matching the JD's explicit disqualifier list, honeypot checks
+(internal profile-consistency, e.g. "expert" skill proficiency claimed with
+0 months of use), and a behavioral signal summary from the 23
+`redrob_signals` fields.
 
 ### 2. Scoring (`scoring.py`)
 
@@ -73,7 +99,7 @@ of named, interpretable components (not a trained black-box model):
 
 | Component | Max points | Rationale |
 |---|---|---|
-| `experience_score` | 40 | Dominant weight — real career-history evidence |
+| `experience_score` | 40 | Exact template-lookup score (see above), 70% current role / 30% best-ever |
 | `skills_score` | 15 | Deliberately capped below experience — supportive only |
 | `yoe_fit_score` | 10 | Smooth falloff outside the JD's 5–9yr band (JD states this is flexible) |
 | `location_score` | 5 | Pune/Noida preferred, other Tier-1 India cities okay, outside India lowest (no visa sponsorship) |
