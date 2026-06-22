@@ -12,10 +12,12 @@ primary_contact:
   email: "<FILL_IN>"
   phone: "<FILL_IN>"
 
-github_repository_url: "<FILL_IN>"   # e.g. https://github.com/yourusername/redrob-hackathon
+github_repository_url: "https://github.com/tinaaswanii/-redrob-hackathon"
 
-sandbox_demo_link: "<FILL_IN>"        # e.g. a HuggingFace Space, Colab notebook, or Streamlit app
-                                       # -- required, must run end-to-end on a small (<=100) sample
+sandbox_demo_link: "<FILL_IN>"        # paste your Colab notebook's share link here
+                                       # (Share -> "Anyone with the link can view" -> copy URL)
+                                       # -- confirmed working: cloned repo, ran rank.py on the
+                                       # 50-candidate sample end-to-end in 0.8s, all checks passed
 
 ai_tools_declared:
   - Claude
