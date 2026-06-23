@@ -155,12 +155,38 @@ authoritative, this script is a development aid.
   consecutive jobs, and none of those show genuine upward escalation
   without a functional role change. The rule is kept in case it matters
   on held-out data, but it's not doing meaningful work on what we can see.
-- Honeypot detection currently relies on two confirmed signature checks
-  (expert-proficiency-with-zero-duration skills; years-of-experience vs.
-  career-history-duration mismatch). We verified these catch a combined
-  ~68 candidates, in the right ballpark versus the ~80 honeypots the
-  README describes, but we have not exhaustively confirmed there's no
-  double-counting or that every honeypot archetype is covered.
+- **Honeypot/trap investigation, done systematically rather than guessed:**
+  We hunted for each archetype the README names, checking actual prevalence
+  in the data before deciding whether to build a rule for it:
+  - *"Subtly impossible profiles"*: confirmed via two signatures — "expert"
+    skill proficiency claimed with 0 months duration, and years-of-experience
+    vs. career-history-duration mismatches >36 months. Combined catch: ~68
+    candidates, roughly matching the README's "~80 honeypots."
+  - *Education-ends-after-first-job and salary-min>max anomalies*: found at
+    huge scale (~19% and ~19% of the full 100K respectively) — far too
+    common to be rare honeypots. Concluded these are synthetic-data
+    generation noise (e.g. min/max salary fields randomly swapped), not
+    deliberate traps, and did **not** build exclusion rules for them, since
+    doing so would have wrongly penalized thousands of normal candidates.
+  - *"Keyword stuffers"*: checked specifically for candidates with multiple
+    "expert"-rated AI/retrieval-specific skills paired with career history
+    that scores 0–2 on our template lookup (i.e. skills claimed with zero
+    real backing). Found **zero** candidates matching this dangerous
+    pattern — the handful of candidates with mismatched generic-tech
+    "expert" skills (e.g. SAP, Hadoop) on irrelevant careers don't actually
+    threaten the ranking, since those skills aren't in our JD-relevant
+    vocabulary anyway and score near-zero on `skills_score` regardless.
+  - *"Behavioral twins"*: found 7 closely-matched pairs within our
+    high-relevance candidate pool (same title/years-of-experience/template
+    score) that differ mainly on `redrob_signals` fields. Spot-checked one
+    pair directly: our `availability_score` and template-based
+    `experience_score` together correctly rank the more reachable, more
+    currently-active candidate higher — this is an emergent property of
+    the scoring design (using *current*-role template score plus
+    behavioral signals), not a rule we had to add specifically.
+  - We have **not** exhaustively proven there are no honeypot archetypes
+    left uncaught — only that the ones we hypothesized and checked for are
+    either handled correctly or genuinely absent at meaningful scale.
 - The location/relocation scoring and salary-fit are intentionally simple
   (the JD doesn't give us salary band data to compare against, so expected
   salary isn't currently used as a scoring input at all).
